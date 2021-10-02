@@ -1,20 +1,28 @@
-package org.ideoholic.apnabazar;
+package com.kb.kohinoorbhoomi;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 import android.widget.Toolbar;
 
 public class MainActivity extends AppCompatActivity {
@@ -22,13 +30,19 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     ProgressDialog prDialog;
     private SwipeRefreshLayout finalMySwipeRefreshLayout;
+
+    private ValueCallback<Uri> mUploadMessage;
+    private final static int FILECHOOSER_RESULTCODE=1;
+    public ValueCallback<Uri[]> uploadMessage;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
 
-        String url = "https://apnabazar.online/";
+        String url = "https://kohinoorbhoomi.com/";
 
         webView = (WebView) findViewById(R.id.webview);
         webView.setWebViewClient(new MyWebViewClient());
@@ -53,10 +67,39 @@ public class MainActivity extends AppCompatActivity {
         finalMySwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-               // webView.loadUrl(webView.getUrl());
+                // webView.loadUrl(webView.getUrl());
                 webView.reload();
             }
         });
+
+
+
+
+        webView.setWebChromeClient(new WebChromeClient(){
+
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+            public boolean onShowFileChooser(WebView mWebView, ValueCallback<Uri[]> filePathCallback, WebChromeClient.FileChooserParams fileChooserParams)
+            {
+                if (uploadMessage != null) {
+                    uploadMessage.onReceiveValue(null);
+                    uploadMessage = null;
+                }
+
+                uploadMessage = filePathCallback;
+
+                Intent intent = fileChooserParams.createIntent();
+                try
+                {
+                    startActivityForResult(intent, 100);
+                } catch (ActivityNotFoundException e)
+                {
+                    uploadMessage = null;
+                    Toast.makeText(getApplicationContext(), "Cannot Open File Chooser", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+                return true;
+            }});
+
     }
 
     @Override
@@ -78,13 +121,13 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
-        @Override
+        /*@Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
             super.onPageStarted(view, url, favicon);
             prDialog = new ProgressDialog(MainActivity.this);
-            prDialog.setMessage("Apna Hai Tho Bharosa Hai");
+            prDialog.setMessage("loading...");
             prDialog.show();
-        }
+        }*/
 
         @Override
         public void onPageFinished(WebView view, String url) {
@@ -121,5 +164,28 @@ public class MainActivity extends AppCompatActivity {
             super.onReceivedError(webView, error.getErrorCode(), error.getDescription().toString(), request.getUrl().toString());
         }
 
+    }
+
+   @Override
+    protected void onActivityResult(int requestCode, int resultCode,
+                                    Intent intent) {
+
+        super.onActivityResult(requestCode, resultCode, intent);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            if (requestCode == 100) {
+                if (uploadMessage == null)
+                    return;
+                uploadMessage.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(resultCode, intent));
+                uploadMessage = null;
+            }
+        } else if (requestCode == FILECHOOSER_RESULTCODE) {
+            if (null == mUploadMessage)
+                return;
+
+            Uri result = intent == null || resultCode != MainActivity.RESULT_OK ? null : intent.getData();
+            mUploadMessage.onReceiveValue(result);
+            mUploadMessage = null;
+        } else
+            Toast.makeText(getApplicationContext(), "Failed to Upload Image", Toast.LENGTH_LONG).show();
     }
 }

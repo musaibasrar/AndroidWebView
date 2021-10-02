@@ -1,4 +1,4 @@
-package org.ideoholic.apnabazar;
+package com.kb.kohinoorbhoomi;
 
 import android.content.Context;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("org.ideoholic.apnabazar", appContext.getPackageName());
+        assertEquals("com.kb.kohinoorbhoomi", appContext.getPackageName());
     }
 }
