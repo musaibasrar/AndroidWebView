@@ -13,6 +13,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -113,13 +114,41 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
     private class MyWebViewClient extends WebViewClient {
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-            view.loadUrl(request.getUrl().toString());
-            return true;
+
+            if(request.getUrl().toString().startsWith("https://kohinoorbhoomi.com") || request.getUrl().toString().startsWith("http://kohinoorbhoomi.com")
+                    || request.getUrl().toString().startsWith("https://www.kohinoorbhoomi.com") || request.getUrl().toString().startsWith("http://www.kohinoorbhoomi.com")){
+                view.loadUrl(request.getUrl().toString());
+                return true;
+            }else if(request.getUrl().toString().contains("whatsapp.com") || request.getUrl().toString().contains("facebook.com")){
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(request.getUrl().toString()));
+                view.getContext().startActivity(intent);
+                return true;
+            }else{
+                view.loadUrl(request.getUrl().toString());
+                return true;
+            }
+
         }
+
+       /* @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            if(url.contains("kohinoorbhoomi.com")){
+                // load my page
+                return true;
+            }else  if(url.contains("https://api.whatsapp.com/send")){
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                view.getContext().startActivity(intent);
+                return true;
+            }else{
+                return false;
+            }
+
+        }*/
 
         /*@Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
